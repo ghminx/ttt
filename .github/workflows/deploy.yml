@@ -24,21 +24,7 @@ jobs:
       - name: 🛠️ Build with Gradle (skip tests)
         run: ./gradlew clean build -x test
 
-      - name: ✅ Test SSH connection
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          port: 22
-          timeout: 60s
-          debug: true
-          script: |
-            echo "🔐 SSH 연결 성공"
-            hostname
-            uptime
-
-      - name: 📤 Upload JAR to EC2
+      - name: 📤 Upload JAR to EC2 (to ~/.ssh/ttt/build/libs)
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -46,7 +32,8 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           port: 22
           source: "build/libs/demo-0.0.1-SNAPSHOT.jar"
-          target: "~/app/demo"
+          target: "~/.ssh/ttt/build/libs"
+          strip_components: 0  # 경로 그대로 유지 (중요)
 
       - name: 🚀 Run JAR on EC2
         uses: appleboy/ssh-action@v1.0.0
@@ -68,13 +55,12 @@ jobs:
               echo "⚠️ 실행 중인 JAR 없음"
             fi
 
-            echo "📂 JAR 위치 이동"
-            cd ~/app/demo
+            echo "📂 프로젝트 위치 이동"
+            cd ~/.ssh/ttt/build/libs
 
-            echo "🚀 새 JAR 실행"
-            nohup java -jar demo-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+            echo "🚀 JAR 실행 시작"
+            nohup java -jar demo-0.0.1-SNAPSHOT.jar > ../../app.log 2>&1 &
 
             sleep 5
-
             echo "📄 로그 미리보기"
-            tail -n 10 app.log
+            tail -n 10 ../../app.log
