@@ -1,56 +1,14 @@
-name: Spring Boot CI/CD
-
-on:
-  push:
-    branches: [ "main" ]
-
-jobs:
-  build-deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📦 Checkout 코드
-        uses: actions/checkout@v3
-
-      - name: ☕ Java 21 설정
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: 🔧 gradlew 권한 설정
-        run: chmod +x ./gradlew
-
-      - name: 🛠️ Gradle Build (테스트 제외)
-        run: ./gradlew clean build -x test
-
-      - name: 🚀 EC2에 배포
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            pkill -f 'demo-0.0.1-SNAPSHOT.jar' || true
-            cd ~/app/demo
-            rm -f demo-0.0.1-SNAPSHOT.jar
-            exit
-
-      - name: 📤 EC2로 JAR 전송
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          source: "build/libs/demo-0.0.1-SNAPSHOT.jar"
-          target: "~/app/demo"
-
-      - name: 🏃 EC2에서 실행
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            cd ~/app/demo
-            nohup java -jar demo-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+- name: ✅ EC2 연결 테스트
+  uses: appleboy/ssh-action@v1.0.0
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ${{ secrets.EC2_USER }}
+    key: ${{ secrets.EC2_KEY }}
+    debug: true
+    port: 22
+    timeout: 60s
+    script: |
+      echo "🔐 연결 성공!"
+      hostname
+      whoami
+      uptime
