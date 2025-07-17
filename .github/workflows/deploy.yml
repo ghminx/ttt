@@ -31,12 +31,11 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           port: 22
-          debug: true
           timeout: 60s
+          debug: true
           script: |
-            echo "✅ SSH 연결 성공"
+            echo "🔐 SSH 연결 성공"
             hostname
-            whoami
             uptime
 
       - name: 📤 Upload JAR to EC2
@@ -48,3 +47,27 @@ jobs:
           port: 22
           source: "build/libs/demo-0.0.1-SNAPSHOT.jar"
           target: "~/app/demo"
+
+      - name: 🚀 Run JAR on EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          port: 22
+          timeout: 60s
+          debug: true
+          script: |
+            echo "🛑 기존 프로세스 종료"
+            pkill -f 'demo-0.0.1-SNAPSHOT.jar' || true
+            sleep 2
+
+            echo "📂 JAR 위치 이동"
+            cd ~/app/demo
+
+            echo "🚀 새 JAR 실행"
+            nohup java -jar demo-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+            sleep 5
+
+            echo "📄 로그 미리보기"
+            tail -n 10 app.log
