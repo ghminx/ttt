@@ -59,14 +59,21 @@ jobs:
           debug: true
           script: |
             echo "🛑 기존 프로세스 종료"
-            pkill -f 'demo-0.0.1-SNAPSHOT.jar' || true
-            sleep 2
+            PID=$(ps aux | grep 'demo-0.0.1-SNAPSHOT.jar' | grep -v grep | awk '{print $2}')
+            if [ -n "$PID" ]; then
+              kill $PID
+              echo "☠️ 프로세스 $PID 종료"
+              sleep 2
+            else
+              echo "⚠️ 실행 중인 JAR 없음"
+            fi
 
             echo "📂 JAR 위치 이동"
             cd ~/app/demo
 
             echo "🚀 새 JAR 실행"
             nohup java -jar demo-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+
             sleep 5
 
             echo "📄 로그 미리보기"
