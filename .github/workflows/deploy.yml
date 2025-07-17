@@ -1,14 +1,27 @@
-- name: ✅ EC2 연결 테스트
-  uses: appleboy/ssh-action@v1.0.0
-  with:
-    host: ${{ secrets.EC2_HOST }}
-    username: ${{ secrets.EC2_USER }}
-    key: ${{ secrets.EC2_KEY }}
-    debug: true
-    port: 22
-    timeout: 60s
-    script: |
-      echo "🔐 연결 성공!"
-      hostname
-      whoami
-      uptime
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  test-connection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Test SSH connection
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          port: 22
+          debug: true
+          timeout: 60s
+          script: |
+            echo "✅ SSH 연결 성공"
+            whoami
+            uptime
